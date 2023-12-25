@@ -1,0 +1,6 @@
+{
+  "products": [
+    { "id": 1, "name": "Nike Air Force One", "price": 100 },
+    { "id": 2, "name": "Kitchen Aid Blender", "price": 200 }
+  ]
+}
