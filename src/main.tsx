@@ -10,6 +10,7 @@ import {
   Router,
   RouterProvider,
 } from "@tanstack/react-router";
+import { Product } from "./mocks/handlers";
 
 async function enableMocking() {
   if (import.meta.env.PROD) return;
@@ -69,24 +70,44 @@ const aboutRoute = new Route({
 const productsRoute = new Route({
   getParentRoute: () => rootRoute,
   path: "products",
-  component: () => (
-    <>
-      <h1>Products</h1>
-      <Link
-        to={productRoute.to}
-        params={{
-          productId: "1",
-        }}
-      >
-        Product 1
-      </Link>
-    </>
-  ),
+  loader: async () => {
+    const resp = await fetch("/api/products");
+    return (await resp.json()) as Product[];
+  },
+  component: () => {
+    const products = productsRoute.useLoaderData();
+    return (
+      <>
+        <h1>Products</h1>
+        <ul>
+          {products.map((p) => (
+            <li>
+              <Link
+                to={productRoute.to}
+                params={{
+                  productId: p.id.toString(),
+                }}
+              >
+                {p.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </>
+    );
+  },
 });
 
 const productRoute = new Route({
   getParentRoute: () => rootRoute,
   path: "products/$productId",
+  loader: async ({ params }) => {
+    const resp = await fetch(`/api/products/${params.productId}`);
+    return (await resp.json()) as Product;
+  },
+  onError: (error) => {
+    console.log(error);
+  },
   component: () => {
     const { productId } = productRoute.useParams();
     return (
@@ -114,6 +135,8 @@ const router = new Router({
   routeTree,
   notFoundRoute,
   defaultPreload: "intent",
+  defaultPendingMs: 500, // Defaults to 1 second, but I prefer showing pending UI more quickly.
+  defaultPendingMinMs: 0, // Defaults to showing any pending component for 500 to avoid a flash, but I'm not a fan since that means the user has to wait up to 499ms extra before seeing anything once the pending component displays.
 });
 
 declare module "@tanstack/react-router" {
