@@ -71,7 +71,7 @@ const productsRoute = new Route({
   getParentRoute: () => rootRoute,
   path: "products",
   loader: async () => {
-    const resp = await fetch("/api/products");
+    const resp = await fetch("http://localhost:3001/products");
     return (await resp.json()) as Product[];
   },
   component: () => {
@@ -102,18 +102,23 @@ const productRoute = new Route({
   getParentRoute: () => rootRoute,
   path: "products/$productId",
   loader: async ({ params }) => {
-    const resp = await fetch(`/api/products/${params.productId}`);
+    const resp = await fetch(
+      `http://localhost:3001/products/${params.productId}`
+    );
+    if (!resp.ok) return null;
     return (await resp.json()) as Product;
   },
   onError: (error) => {
     console.log(error);
   },
   component: () => {
-    const { productId } = productRoute.useParams();
+    const product = productRoute.useLoaderData();
+    if (!product) return <h1>Product not found</h1>;
+    const { name, price } = product;
     return (
       <>
-        <h1>Product Details</h1>
-        <p>Product ID: {productId}</p>
+        <h1>{name}</h1>
+        <p>Price: ${price}</p>
       </>
     );
   },
@@ -145,10 +150,10 @@ declare module "@tanstack/react-router" {
   }
 }
 
-enableMocking().then(() => {
-  ReactDOM.createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-      <RouterProvider router={router} />
-    </React.StrictMode>
-  );
-});
+// enableMocking().then(() => {
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <RouterProvider router={router} />
+  </React.StrictMode>
+);
+// });
